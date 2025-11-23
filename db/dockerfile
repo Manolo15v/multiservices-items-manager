@@ -1,0 +1,15 @@
+# Use the official PostgreSQL image as the base
+FROM postgres:latest
+
+# Set environment variables for the PostgreSQL superuser and database
+ENV POSTGRES_DB=mydatabase \
+    POSTGRES_USER=myuser \
+    POSTGRES_PASSWORD=mypassword
+
+# Optional: Copy initialization scripts to run on container startup
+# Place your .sql files in a directory named 'docker-entrypoint-initdb.d'
+# For example, if you have a 'init.sql' file in the same directory as your Dockerfile:
+COPY init.sql /docker-entrypoint-initdb.d/
+
+# Expose the default PostgreSQL port
+EXPOSE 5432
