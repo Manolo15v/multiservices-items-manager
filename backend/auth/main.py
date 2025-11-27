@@ -1,55 +1,53 @@
 from typing import Annotated
-from fastapi import FastAPI, Request, Cookie, Depends, HTTPException, status
-from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import FastAPI, Request, Depends, HTTPException, status
+from fastapi.middleware.cors import CORSMiddleware 
 from sqlalchemy.orm import Session
-from jose import JWTError, jwt
 from app.db.session import engine, Base, get_db
 from app.db.models import User as UserModel
 from app.core.config import settings
 from app.routers import auth 
-from app.routers.auth import get_user_from_token
+from app.routers.auth import get_current_user 
 
-#crear tablas
 Base.metadata.create_all(bind=engine)
-app = FastAPI()
 
-#rutas de autenticación
+app = FastAPI(
+    title="Servicio de Autenticacion FastAPI",
+    description="API RESTful para manejo de usuarios y autenticacion (JWT Bearer Token)"
+)
+
+#config cors 
+origins = [
+    "http://localhost:8080",  #vue
+    "http://localhost:5173",  #bck
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,       #origenes permitidos
+    allow_credentials=True,      #permite cookies
+    allow_methods=["*"],         #permite todos los metodos
+    allow_headers=["*"],         #permite todos los encabezados
+)
+
+#rutas de  autenticacion
 app.include_router(auth.router)
 
-jinja2_templates = Jinja2Templates(directory="templates")
 
-#vistas
+#endpoint de prueba
+#ruta de ejemplo para demostrar que la autenticacion con Bearer Token funciona
+@app.get("/api/users/me", tags=["users"]) 
+def read_users_me(current_user: Annotated[UserModel, Depends(get_current_user)]): #protegida
+    """
+    Endpoint para obtener los datos del usuario actualmente autenticado (protegido por JWT).
+    Retorna JSON con el nombre de usuario y email.
+    """
+    return {
+        "username": current_user.username, 
+        "email": current_user.email,
+        "message": "Autenticacion exitosa con Bearer Token."
+    }
 
-@app.get("/", response_class=HTMLResponse)#principal de registro
-def root(request: Request):
-    return jinja2_templates.TemplateResponse("index.html", {"request": request})
-
-@app.get("/login", response_class=HTMLResponse)#login
-def login_page(request: Request):
-    return jinja2_templates.TemplateResponse("login.html", {"request": request})
-
-@app.get("/verification_page", response_class=HTMLResponse)#verificaion por correo
-def verification_page(request: Request, username: str = ""):
-    if not username:
-        return RedirectResponse(
-            url="/", 
-            status_code=status.HTTP_302_FOUND
-        )
-    return jinja2_templates.TemplateResponse(
-        "verify.html", 
-        {"request": request, "username": username}
-    )
-@app.get("/users/dashboard", response_class=HTMLResponse) 
-def dashboard(request: Request, db: Session = Depends(get_db)):
-    try:
-        user = get_user_from_token(
-            access_token=request.cookies.get("access_token"),
-            db=db
-        )
-        return jinja2_templates.TemplateResponse(
-            "dashboard.html", 
-            {"request": request, "username": user.username}
-        )
-    except HTTPException:
-        return RedirectResponse("/", status_code=status.HTTP_302_FOUND)
+#ruta raiz,mensaje de bienvenida
+@app.get("/", tags=["root"])
+def root():
+    return {"message": "Bienvenido al servicio de autenticacion con FastAPI. Use los endpoints /api/auth para login y register"}
