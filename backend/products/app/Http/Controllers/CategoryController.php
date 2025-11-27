@@ -35,38 +35,52 @@ class CategoryController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-        ]);
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'description' => 'nullable|string',
+            ]);
 
-        $slug = Str::slug($validated['name']);
-        $originalSlug = $slug;
-        $counter = 1;
+            $slug = Str::slug($validated['name']);
+            $originalSlug = $slug;
+            $counter = 1;
 
-        while (Category::where('slug', $slug)->exists()) {
-            $slug = $originalSlug . '-' . $counter;
-            $counter++;
+            while (Category::where('slug', $slug)->exists()) {
+                $slug = $originalSlug . '-' . $counter;
+                $counter++;
+            }
+
+            $validated['slug'] = $slug;
+
+            $category = Category::create($validated);
+            $category->loadCount('products');
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id' => $category->id,
+                    'name' => $category->name,
+                    'slug' => $category->slug,
+                    'description' => $category->description,
+                    'products_count' => $category->products_count,
+                    'created_at' => $category->created_at,
+                    'updated_at' => $category->updated_at,
+                ],
+                'message' => 'Category created successfully'
+            ], 201);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Creation failed: ' . $e->getMessage()
+            ], 500);
         }
-
-        $validated['slug'] = $slug;
-
-        $category = Category::create($validated);
-        $category->loadCount('products');
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'id' => $category->id,
-                'name' => $category->name,
-                'slug' => $category->slug,
-                'description' => $category->description,
-                'products_count' => $category->products_count,
-                'created_at' => $category->created_at,
-                'updated_at' => $category->updated_at,
-            ],
-            'message' => 'Category created successfully'
-        ], 201);
     }
 
     public function show(Category $category): JsonResponse
@@ -103,40 +117,63 @@ class CategoryController extends Controller
 
     public function update(Request $request, Category $category): JsonResponse
     {
-        $validated = $request->validate([
-            'name' => 'sometimes|required|string|max:255',
-            'description' => 'nullable|string',
-        ]);
+        try {
+            $validated = $request->validate([
+                'name' => 'sometimes|string|max:255',
+                'description' => 'nullable|string',
+            ]);
 
-        if (isset($validated['name'])) {
-            $slug = Str::slug($validated['name']);
-            $originalSlug = $slug;
-            $counter = 1;
-
-            while (Category::where('slug', $slug)->where('id', '!=', $category->id)->exists()) {
-                $slug = $originalSlug . '-' . $counter;
-                $counter++;
+            // Si no se proporcionan datos, devolver error
+            if (empty($validated)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No data provided for update',
+                    'errors' => ['Please provide at least one field to update']
+                ], 422);
             }
 
-            $validated['slug'] = $slug;
+            if (isset($validated['name'])) {
+                $slug = Str::slug($validated['name']);
+                $originalSlug = $slug;
+                $counter = 1;
+
+                while (Category::where('slug', $slug)->where('id', '!=', $category->id)->exists()) {
+                    $slug = $originalSlug . '-' . $counter;
+                    $counter++;
+                }
+
+                $validated['slug'] = $slug;
+            }
+
+            $category->update($validated);
+            $category->loadCount('products');
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id' => $category->id,
+                    'name' => $category->name,
+                    'slug' => $category->slug,
+                    'description' => $category->description,
+                    'products_count' => $category->products_count,
+                    'created_at' => $category->created_at,
+                    'updated_at' => $category->updated_at,
+                ],
+                'message' => 'Category updated successfully'
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Update failed: ' . $e->getMessage()
+            ], 500);
         }
-
-        $category->update($validated);
-        $category->loadCount('products');
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'id' => $category->id,
-                'name' => $category->name,
-                'slug' => $category->slug,
-                'description' => $category->description,
-                'products_count' => $category->products_count,
-                'created_at' => $category->created_at,
-                'updated_at' => $category->updated_at,
-            ],
-            'message' => 'Category updated successfully'
-        ]);
     }
 
     public function destroy(Category $category): JsonResponse
