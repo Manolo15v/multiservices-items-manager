@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Producto - API Laravel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .form-container {
+            padding: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .file-upload {
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            background: #f8f9ff;
+            transition: background-color 0.3s ease;
+        }
+
+        .file-upload:hover {
+            background: #f0f2ff;
+        }
+
+        .file-upload input[type="file"] {
+            display: none;
+        }
+
+        .file-upload-label {
+            cursor: pointer;
+            display: inline-block;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border-radius: 5px;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+        }
+
+        .file-upload-label:hover {
+            background: #5a6fd8;
+        }
+
+        .images-preview {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .image-preview-item {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .image-preview-item img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+        }
+
+        .remove-image {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(255, 59, 48, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .loading {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .response {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .response.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .response.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .response pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .file-info {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .images-preview {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛍️ Crear Nuevo Producto</h1>
+            <p>Sube hasta 5 imágenes y completa la información del producto</p>
+        </div>
+
+        <div class="form-container">
+            <form id="productForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="name">Nombre del Producto *</label>
+                        <input type="text" id="name" name="name" required placeholder="Ej: Laptop Gaming Pro">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="price">Precio *</label>
+                        <input type="number" id="price" name="price" required step="0.01" min="0" placeholder="99.99">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="stock">Stock *</label>
+                        <input type="number" id="stock" name="stock" required min="0" placeholder="10">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="category_id">Categoría</label>
+                        <select id="category_id" name="category_id">
+                            <option value="">Seleccionar categoría</option>
+                            <option value="1">Electrónicos</option>
+                            <option value="2">Ropa</option>
+                            <option value="3">Hogar</option>
+                            <option value="4">Deportes</option>
+                            <option value="5">Libros</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="status">Estado</label>
+                    <select id="status" name="status" required>
+                        <option value="active">Activo</option>
+                        <option value="inactive">Inactivo</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Descripción</label>
+                    <textarea id="description" name="description" placeholder="Describe las características del producto..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Imágenes (Máximo 5, hasta 2MB cada una)</label>
+                    <div class="file-upload">
+                        <input type="file" id="images" name="images[]" multiple accept="image/jpeg,image/jpg,image/png,image/gif,image/webp">
+                        <label for="images" class="file-upload-label">📷 Seleccionar Imágenes</label>
+                        <div class="file-info">
+                            Formatos: JPEG, PNG, JPG, GIF, WebP | Máximo: 2MB por imagen
+                        </div>
+                    </div>
+                    <div id="imagesPreview" class="images-preview"></div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="submitBtn">
+                    <span id="btnText">Crear Producto</span>
+                </button>
+            </form>
+
+            <div class="loading" id="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>Creando producto...</p>
+            </div>
+
+            <div id="response" class="response"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8000/api';
+        const form = document.getElementById('productForm');
+        const fileInput = document.getElementById('images');
+        const imagesPreview = document.getElementById('imagesPreview');
+        const loading = document.getElementById('loading');
+        const response = document.getElementById('response');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+
+        let selectedFiles = [];
+
+        // Manejar selección de imágenes
+        fileInput.addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+
+            // Validar número de archivos
+            if (files.length > 5) {
+                showResponse('error', 'Máximo 5 imágenes permitidas');
+                e.target.value = '';
+                selectedFiles = [];
+                updatePreview();
+                return;
+            }
+
+            // Validar tamaño y tipo de cada archivo
+            const validFiles = files.filter(file => {
+                if (file.size > 2 * 1024 * 1024) {
+                    showResponse('error', `El archivo ${file.name} excede los 2MB`);
+                    return false;
+                }
+
+                const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                if (!validTypes.includes(file.type)) {
+                    showResponse('error', `El archivo ${file.name} no es un formato válido`);
+                    return false;
+                }
+
+                return true;
+            });
+
+            selectedFiles = validFiles;
+            updatePreview();
+        });
+
+        // Actualizar vista previa de imágenes
+        function updatePreview() {
+            imagesPreview.innerHTML = '';
+
+            selectedFiles.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const previewItem = document.createElement('div');
+                    previewItem.className = 'image-preview-item';
+                    previewItem.innerHTML = `
+                        <img src="${e.target.result}" alt="Preview ${index + 1}">
+                        <button type="button" class="remove-image" onclick="removeImage(${index})">×</button>
+                    `;
+                    imagesPreview.appendChild(previewItem);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Eliminar imagen seleccionada
+        function removeImage(index) {
+            selectedFiles.splice(index, 1);
+            updatePreview();
+
+            // Actualizar el input file
+            const dt = new DataTransfer();
+            selectedFiles.forEach(file => dt.items.add(file));
+            fileInput.files = dt.files;
+        }
+
+        // Manejar envío del formulario
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            // Validar que el formulario sea válido
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            // Crear FormData y agregar todos los campos
+            const formData = new FormData();
+
+            // Agregar campos del formulario
+            formData.append('name', document.getElementById('name').value);
+            formData.append('price', document.getElementById('price').value);
+            formData.append('stock', document.getElementById('stock').value);
+            formData.append('category_id', document.getElementById('category_id').value);
+            formData.append('status', document.getElementById('status').value);
+            formData.append('description', document.getElementById('description').value);
+
+            // Agregar imágenes al FormData (manejo correcto para arrays)
+            selectedFiles.forEach(file => {
+                formData.append('images[]', file);
+            });
+
+            // Mostrar loading
+            loading.style.display = 'block';
+            response.style.display = 'none';
+            submitBtn.disabled = true;
+            btnText.textContent = 'Creando...';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/products`, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showResponse('success', '¡Producto creado exitosamente!', data);
+                    form.reset();
+                    selectedFiles = [];
+                    updatePreview();
+                } else {
+                    showResponse('error', data.message || 'Error al crear el producto', data);
+                }
+            } catch (error) {
+                showResponse('error', 'Error de conexión con el servidor', { error: error.message });
+            } finally {
+                loading.style.display = 'none';
+                submitBtn.disabled = false;
+                btnText.textContent = 'Crear Producto';
+            }
+        });
+
+        // Mostrar respuesta
+        function showResponse(type, message, data = null) {
+            response.className = `response ${type}`;
+            response.style.display = 'block';
+
+            let html = `<h3>${type === 'success' ? '✅ ' : '❌ '}${message}</h3>`;
+
+            if (data) {
+                html += '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            }
+
+            response.innerHTML = html;
+
+            // Auto-scroll a la respuesta
+            response.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Cargar categorías desde la API (opcional)
+        async function loadCategories() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/categories`);
+                if (response.ok) {
+                    const data = await response.json();
+                    const categorySelect = document.getElementById('category_id');
+
+                    categorySelect.innerHTML = '<option value="">Seleccionar categoría</option>';
+
+                    if (data.success && data.data) {
+                        data.data.forEach(category => {
+                            categorySelect.innerHTML += `<option value="${category.id}">${category.name}</option>`;
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Error cargando categorías:', error);
+            }
+        }
+
+        // Cargar categorías al iniciar la página
+        loadCategories();
+    </script>
+</body>
+</html>
