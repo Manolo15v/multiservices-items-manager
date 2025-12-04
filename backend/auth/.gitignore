@@ -1,7 +1,6 @@
 # Ignorar venv, .env, __pycache__
 
 venv/
-.env
 env/
 __pycache__/
 # Ignorar archivos de bases de datos SQLite
