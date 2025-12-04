@@ -1,0 +1,28 @@
+[package]
+name = "inventory"
+version = "0.1.0"
+edition = "2021"
+authors = ["Inventory Manager Team"]
+description = "Rust-based inventory management microservice"
+
+[dependencies]
+actix-web = "4.4"
+actix-cors = "0.6"
+tokio = { version = "1.36", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sqlx = { version = "0.7.3", features = ["runtime-tokio", "postgres", "chrono"] }
+chrono = { version = "0.4.34", features = ["serde"] }
+dotenvy = "0.15.7"
+env_logger = "0.10.2"
+log = "0.4.20"
+thiserror = "1.0.57"
+
+# Pin transitive dependencies to avoid edition2024 requirements
+base64ct = "=1.6.0"
+home = "=0.5.9"
+
+[profile.release]
+lto = true
+opt-level = 3
+

@@ -17,16 +17,18 @@ app = FastAPI(
 
 #config cors 
 origins = [
-    "http://localhost:8080",  #vue
-    "http://localhost:5173",  #bck
+    "http://localhost:8080",   # vue dev
+    "http://localhost:5173",   # vite dev
+    "http://frontend:5173",    # docker frontend
+    "http://127.0.0.1:5173",   # local
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,       #origenes permitidos
-    allow_credentials=True,      #permite cookies
-    allow_methods=["*"],         #permite todos los metodos
-    allow_headers=["*"],         #permite todos los encabezados
+    allow_origins=origins,       # origenes permitidos
+    allow_credentials=True,      # permite cookies
+    allow_methods=["*"],         # permite todos los metodos
+    allow_headers=["*"],         # permite todos los encabezados
 )
 
 #rutas de  autenticacion
